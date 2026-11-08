@@ -1,0 +1,48 @@
+{
+  "name": "pit-fundamentals-mcp",
+  "version": "0.4.1",
+  "mcpName": "io.github.Wei-LienWU/pit-fundamentals",
+  "description": "MCP server for company fundamentals from official filings (US, Japan, Taiwan, Korea, France, Belgium, Denmark, Sweden, Estonia, Slovakia, Latvia, NZ charities), each figure dated by its filing.",
+  "type": "module",
+  "bin": {
+    "pit-fundamentals-mcp": "index.js"
+  },
+  "files": [
+    "index.js",
+    "tools.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "fundamentals",
+    "filing-date",
+    "finance",
+    "sec-edgar",
+    "twse",
+    "opendart",
+    "backtesting",
+    "modelcontextprotocol",
+    "private-companies",
+    "financial-data"
+  ],
+  "license": "MIT",
+  "author": "WU Capital Limited <william@tradingagentapp.com>",
+  "homepage": "https://www.tradingagentapp.com/developers",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wei-LienWU/pit-fundamentals-mcp.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.2.0"
+  },
+  "bugs": {
+    "url": "https://www.tradingagentapp.com/developers",
+    "email": "william@tradingagentapp.com"
+  }
+}
