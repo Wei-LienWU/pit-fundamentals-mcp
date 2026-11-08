@@ -130,6 +130,14 @@ export const MARKET_SEMANTICS =
   "its changed version; " +
   "associations and foundations are not included. Natural persons who are " +
   "entrepreneurs are never included for either. " +
+  ".AU is Australia (ticker = ABN + .AU): official income figures for large " +
+  "corporate tax entities from the Australian Taxation Office's Corporate Tax " +
+  "Transparency reports (CC BY 3.0 AU), only tax_total_income, " +
+  "tax_taxable_income and tax_payable. These are tax return figures, not " +
+  "accounts: total income is not revenue and there is no balance sheet. " +
+  "`filed` is the date the ATO's file for that income year was public, not a " +
+  "filing date; a blank taxable income or tax payable is not zero. The API's " +
+  "index lists Australia under `also`, beside `coverage`. " +
   "Period labels: fp is FY for an annual row; for a quarterly row (US, " +
   "Taiwan) fy and fp are the CALENDAR year and quarter that contain the " +
   "period end, not the company's own fiscal quarter: Apple's quarter ending " +
@@ -333,7 +341,8 @@ export function registerTools(server, { z, api, search, around, notice }) {
         "period end, filing date and form. Use it for a company's current figures, or with as_of for what had " +
         "been filed by a given day; call search_companies first if you have a name rather than a ticker. " +
         "Inputs: ticker (e.g. AAPL, 2330.TW, 005930.KS, 0403091220.BE, 775670417.FR, CC21860.NZC, and " +
-        "10238429.EE, 5560356163.SE, 47239255.SK, 40003032949.LV where get_coverage lists them); metric " +
+        "10238429.EE, 5560356163.SE, 47239255.SK, 40003032949.LV where get_coverage lists them, and " +
+        "96002925948.AU for Australia's tax figures); metric " +
         "(comma-separated; a name we do not hold is left out); as_of (only filings dated on or before that day). " +
         "On a free key, a company outside the full-history sample answers from its most recent reported fiscal " +
         "year only (history_depth says so) and as_of needs a licence or an evaluation key. Each metric is its " +

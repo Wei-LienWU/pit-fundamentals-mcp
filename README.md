@@ -3,11 +3,13 @@
 [![mcptry](https://mcptry.com/badge/io.github.Wei-LienWU/pit-fundamentals)](https://mcptry.com/servers/io.github.Wei-LienWU/pit-fundamentals)
 
 Company financials from official filings, as MCP tools, with **the filing
-date on every figure**. About 4.2 million entities in 12 markets, most of
+date on every figure**. About 4.2 million entities in 13 markets, most of
 them private companies: the company registers of France, Belgium, Denmark,
 Sweden, Estonia, Latvia and Slovakia, plus the United States (SEC EDGAR),
-Japan (FSA EDINET), Korea (FSS OpenDART), Taiwan (TWSE) and New Zealand
-registered charities.
+Japan (FSA EDINET), Korea (FSS OpenDART), Taiwan (TWSE), New Zealand
+registered charities, and tax figures (total income, taxable income, tax
+payable; not accounts) for large Australian entities from the Australian
+Taxation Office.
 
 ```
 "What was Apple's revenue as of the start of 2022?"
