@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "pit-fundamentals": {
+      "url": "https://www.tradingagentapp.com/api/mcp"
+    }
+  }
+}
