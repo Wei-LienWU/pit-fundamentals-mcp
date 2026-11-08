@@ -1,6 +1,6 @@
 {
   "name": "pit-fundamentals-mcp",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "mcpName": "io.github.Wei-LienWU/pit-fundamentals",
   "description": "MCP server for company fundamentals from official filings (US, Japan, Taiwan, Korea, France, Belgium, Denmark, Sweden, Estonia, Slovakia, Latvia, NZ charities), each figure dated by its filing.",
   "type": "module",

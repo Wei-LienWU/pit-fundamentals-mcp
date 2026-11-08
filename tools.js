@@ -11,10 +11,14 @@
 /** Only get_coverage used to return the API's per-market `notes`, and a model
  *  has no reason to call it before asking for a number. So the caveats that
  *  change what a figure MEANS never reached the assistant that was reading
- *  the figure. These ride with every data response now. Taiwan is the one a
- *  model is most likely to get wrong: the figures are already single-quarter,
- *  and differencing them again (as Taiwan's own cumulative filings would
- *  need) understates every quarter after Q1. */
+ *  the figure. These ride with every data response, as `market_notes`
+ *  (envelope below, and get_coverage). Until 0.4.1 they were also repeated in
+ *  both data tools' descriptions, which made each over 10,000 characters;
+ *  the descriptions now keep only the caveats a model needs before calling
+ *  (DATA_CAVEATS) and point here. Taiwan is the one a model is most likely to
+ *  get wrong: the figures are already single-quarter, and differencing them
+ *  again (as Taiwan's own cumulative filings would need) understates every
+ *  quarter after Q1. */
 export const MARKET_SEMANTICS =
   "Suffixes are not all listed equities, and not all figures mean what the " +
   "column name suggests. .TW income-statement values are SINGLE-QUARTER " +
@@ -25,7 +29,11 @@ export const MARKET_SEMANTICS =
   "Government Data License v1.0, attribution required); history from 2013 " +
   "comes from the TWSE MOPS XBRL archive, which is NOT open data: keep both " +
   "attribution notices and do not call Taiwan figures open data. US figures " +
-  "(SEC EDGAR) are public information. .TW filing dates are the statutory " +
+  "(SEC EDGAR) are public information; a US `form` ending /scale-differs-later " +
+  "marks a figure that a later 10-K or 10-Q of the company gives for the same period " +
+  "about 1,000 or 1,000,000 times larger or smaller (served as filed; the flag " +
+  "does not say which filing is wrong, and ratios from it carry it too). " +
+  ".TW filing dates are the statutory " +
   "reporting deadline, a proxy, not the actual release date; for some " +
   "financial and foreign first-listed companies and for weekend deadlines " +
   "it can be earlier than the real deadline (known issue, being corrected). " +
@@ -145,31 +153,62 @@ export const KNOWN_ISSUES_TEXT = Object.keys(KNOWN_ISSUES).length
   ? `Known issues, being corrected (also in the known_issues field of each data reply): ${Object.values(KNOWN_ISSUES).join(" ")}`
   : "";
 
-/** The detailed line items (trade_receivables, inventories, trade_payables,
- *  ppe, current_assets, current_liabilities, retained_earnings, capex, …)
- *  follow local accounting rules, so a model comparing two markets needs the
- *  definition before the number. get_data_dictionary returns it, with the
- *  measured share of company-periods that carry each one. */
-export const LINE_ITEM_SEMANTICS =
-  "Detailed line items (trade_receivables, trade_and_other_receivables, inventories, trade_payables, " +
-  "trade_and_other_payables, ppe, noncurrent_assets, current_assets, current_liabilities, retained_earnings, " +
-  "depreciation_amortization, interest_expense, cash_flow_operating, capex, and in the US minority_interest and " +
-  "temporary_equity, and where the dictionary maps them land_and_buildings, land, buildings, pension_provisions, " +
-  "cost_of_materials, purchases_of_goods, purchases_of_materials, wages_and_salaries, operating_taxes and income_tax) " +
-  "are filed lines of the same filings, " +
-  "dated by their filing, read so far for the US, Taiwan, Slovakia, Estonia, Japan, Latvia and Belgium; their definitions follow each market's accounting " +
-  "rules, so call get_data_dictionary before comparing markets. Signs are as filed: capex is a positive number in " +
-  "the US and a NEGATIVE number in Taiwan and Japan, all meaning cash paid. US and Taiwan cash-flow lines (and US " +
-  "depreciation_amortization) are annual only. free_cash_flow, working_capital, current_ratio and ebitda are " +
-  "calculated by us, not filed, carry form derived and appear only where every input comes from one filing; Taiwan " +
-  "has no depreciation_amortization and so no ebitda. A market with no measured share in the dictionary has not had " +
-  "its line items loaded or measured yet; a missing line item is not a zero, except in Estonia, where a filed zero in " +
-  "noncurrent_assets is left out, and in Latvia, where a zero in the register's file is left out on every line item, " +
-  "so a missing figure there can mean zero or not reported. In Belgium staff_costs, wages_and_salaries and " +
-  "pension_provisions are withheld for a company with fewer than 5 employees (full-time equivalents as filed), or " +
-  "with no employee count on a micro-model filing, because with so few staff they reveal individuals' pay; their " +
-  "absence there is not a zero.";
+/** The detailed line-item codes and the figures calculated from them. Named
+ *  in get_data_dictionary's description so a model knows which metric names
+ *  the dictionary defines; their definitions are in its reply. */
+export const LINE_ITEM_CODES =
+  "trade_receivables, trade_and_other_receivables, inventories, trade_payables, trade_and_other_payables, ppe, " +
+  "noncurrent_assets, current_assets, current_liabilities, retained_earnings, depreciation_amortization, " +
+  "interest_expense, cash_flow_operating, capex, minority_interest, temporary_equity, land_and_buildings, land, " +
+  "buildings, pension_provisions, cost_of_materials, purchases_of_goods, purchases_of_materials, " +
+  "wages_and_salaries, operating_taxes, income_tax; calculated: free_cash_flow, working_capital, current_ratio, ebitda";
 
+/** What a model must know before it calls a data tool, and nothing more.
+ *  mcptry's security check flags a tool description over 4,000 characters
+ *  (hard to review, easy to hide instructions in); the tests keep every
+ *  description under 2,000.
+ *
+ *  Where the text that used to be in these descriptions lives now (0.4.2):
+ *  - MARKET_SEMANTICS, whole (per-market filing dates, solo vs group,
+ *    lawful gaps, NZ charities, the flags in `form`, attributes and
+ *    activity_code, the EE/SE/SK/LV notes, period labels, the licence
+ *    sentence): `market_notes` in every get_latest_fundamentals,
+ *    get_fundamentals_history and get_coverage reply, unchanged; field by
+ *    field also in the reply's `schema`, and per market on
+ *    https://www.tradingagentapp.com/fundamentals/methodology.
+ *  - The old LINE_ITEM_SEMANTICS, sentence by sentence, in the
+ *    get_data_dictionary reply (GET /api/v1/fundamentals/dictionary, built
+ *    from the line-item catalog):
+ *      the list of codes                     metrics[].m, derived[].m (and LINE_ITEM_CODES)
+ *      filed lines of the same filings,
+ *        dated by their filing               about; rules[0] (Dating)
+ *      markets read so far                   rules[7] (Scope of this version)
+ *      local definitions, read the
+ *        dictionary before comparing         rules[4]; metrics[].markets
+ *      signs as filed, capex +US / -TW,JP    rules[1] (Signs)
+ *      US/TW cash-flow lines annual only     rules[2]
+ *      free_cash_flow, working_capital,
+ *        current_ratio, ebitda calculated,
+ *        form derived, one filing            rules[5]; derived[]
+ *      Taiwan: no D&A, so no ebitda          rules[3]; derived ebitda
+ *      no measured share = not loaded yet    measured_note
+ *      missing is not zero, except EE
+ *        noncurrent_assets and LV zeros      about
+ *      small employers (BE, EE, SE, SK, LV)  rules[6] (Small employers)
+ *    The data tools' descriptions keep one sentence of it (local rules,
+ *    capex sign, call get_data_dictionary first).
+ *  - The latest view's "each metric is its own latest value" and `stale`:
+ *    kept in its description, and in the reply's schema.note and schema.stale. */
+const DATA_CAVEATS =
+  "Before using the figures: they are as filed, each keyed to its filing date (`filed`) as its market records " +
+  "it (how each market dates a filing: https://www.tradingagentapp.com/fundamentals/methodology). " +
+  ".TW quarterly values are already SINGLE-QUARTER amounts: do not difference adjacent quarters. For a " +
+  "quarterly row (US, Taiwan) fy and fp are the CALENDAR quarter containing the period end, not the company's " +
+  "fiscal quarter. Each reply's `market_notes` and `schema` give the per-market caveats (solo or group " +
+  "accounts, lawful gaps, charities, flags in `form`); read them before interpreting a figure. Detailed line " +
+  "items follow local accounting rules and keep the filed sign (capex is negative in Taiwan and Japan): call " +
+  "get_data_dictionary before comparing them across markets. When you relay figures, keep the reply's " +
+  "`attribution` and `licence` notices with them.";
 
 /** Every tool only reads published filings: no tool changes anything, and
  *  the same call gives the same answer until a new filing arrives. Clients
@@ -291,15 +330,17 @@ export function registerTools(server, { z, api, search, around, notice }) {
       annotations: READ_ONLY,
       description:
         "The most recent reported value of each metric for one ticker, each with its period (fy, fp), " +
-        "period end, filing date and form. Each metric is its own latest value, so two metrics can come " +
-        "from different periods, and a quarterly fp means ONE quarter's figure, not a year. Pass as_of " +
-        "to use only filings dated on or before that day (how each market dates a filing: " +
-        "https://www.tradingagentapp.com/fundamentals/methodology). On a free key, a company outside the " +
-        "full-history sample answers from its most recent reported fiscal year only (history_depth says " +
-        "so) and as_of needs a licence or an evaluation key. Pass metric (comma-separated) to get only " +
-        "those metrics; a name we do not hold is left out. Tickers look like AAPL, 2330.TW, " +
-        "005930.KS, 0403091220.BE, 775670417.FR, CC21860.NZC (and 10238429.EE, 5560356163.SE, 47239255.SK, 40003032949.LV where the coverage lists them). " +
-        MARKET_SEMANTICS + " " + LINE_ITEM_SEMANTICS + (KNOWN_ISSUES_TEXT ? ` ${KNOWN_ISSUES_TEXT}` : ""),
+        "period end, filing date and form. Use it for a company's current figures, or with as_of for what had " +
+        "been filed by a given day; call search_companies first if you have a name rather than a ticker. " +
+        "Inputs: ticker (e.g. AAPL, 2330.TW, 005930.KS, 0403091220.BE, 775670417.FR, CC21860.NZC, and " +
+        "10238429.EE, 5560356163.SE, 47239255.SK, 40003032949.LV where get_coverage lists them); metric " +
+        "(comma-separated; a name we do not hold is left out); as_of (only filings dated on or before that day). " +
+        "On a free key, a company outside the full-history sample answers from its most recent reported fiscal " +
+        "year only (history_depth says so) and as_of needs a licence or an evaluation key. Each metric is its " +
+        "own latest value, so two metrics can come from different periods; a quarterly fp is ONE quarter's " +
+        "figure, not a year; check `stale` (true: the company has filed since without this metric, so the " +
+        "figure is not current). " +
+        DATA_CAVEATS + (KNOWN_ISSUES_TEXT ? ` ${KNOWN_ISSUES_TEXT}` : ""),
       inputSchema: z.object({
         ticker: z.string().describe("Ticker symbol, e.g. AAPL or 2330.TW"),
         metric: z.string().optional().describe("Comma-separated metrics, e.g. revenue,net_income. Omit for all."),
@@ -327,16 +368,14 @@ export function registerTools(server, { z, api, search, around, notice }) {
       title: "Reported history for a company",
       annotations: READ_ONLY,
       description:
-        "The stored figures for one ticker, each row carrying its period (fy, fp: for a quarterly row the " +
-        "CALENDAR quarter containing the period end) and its filing date as each market records it (for " +
-        "Taiwan, the general statutory reporting deadline — a proxy, usually on or after the actual " +
-        "release). Filter with metric (comma-separated) and from (period-end lower bound); as_of keeps " +
-        "only filings dated on or before that day. On a free key, a company outside the full-history " +
-        "sample answers with its most recent reported fiscal year only: full_history false and " +
-        "history_depth say so, and older filings exist. Long histories are capped at " +
-        `${MAX_ROWS} rows, keeping the most recent rows of EVERY metric (per_metric says how many of each); ` +
-        "narrow with metric/from for the rest. " +
-        MARKET_SEMANTICS + " " + LINE_ITEM_SEMANTICS + (KNOWN_ISSUES_TEXT ? ` ${KNOWN_ISSUES_TEXT}` : ""),
+        "The stored figures for one ticker, one row per metric and period, each with its period (fy, fp), " +
+        "period end, filing date and form. Use it for trends and for what was on file at a past date. Inputs: " +
+        "ticker, metric (comma-separated), from (earliest period end), as_of (only filings dated on or before " +
+        "that day). On a free key, a company outside the full-history sample answers with its most recent " +
+        "reported fiscal year only: full_history false and history_depth say so, and older filings exist. " +
+        `Long histories are capped at ${MAX_ROWS} rows, keeping the most recent rows of EVERY metric (per_metric ` +
+        "says how many of each); narrow with metric/from for the rest. " +
+        DATA_CAVEATS + (KNOWN_ISSUES_TEXT ? ` ${KNOWN_ISSUES_TEXT}` : ""),
       inputSchema: z.object({
         ticker: z.string().describe("Ticker symbol, e.g. AAPL or 2330.TW"),
         metric: z.string().optional().describe("Comma-separated metrics, e.g. revenue,net_income"),
@@ -447,8 +486,9 @@ export function registerTools(server, { z, api, search, around, notice }) {
       description:
         "The data dictionary of the detailed line items: for every metric, its definition, which filed line each " +
         "market reads it from (or why a market has none), and the measured share of that market's company-periods " +
-        "that carry it; and the figures we calculate from them, with their formulas. Use it before comparing a line " +
-        "item across markets. " + LINE_ITEM_SEMANTICS,
+        "that carry it; the figures we calculate from them, with their formulas; and the rules that apply to all " +
+        "of them (dating, signs, annual-only cash-flow lines, small employers). Use it before comparing a line " +
+        "item across markets, or to learn what a line-item code means. Codes: " + LINE_ITEM_CODES + ".",
       inputSchema: z.object({}),
     },
     async () => {
