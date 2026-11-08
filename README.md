@@ -1,5 +1,7 @@
 # pit-fundamentals-mcp
 
+[![mcptry](https://mcptry.com/badge/io.github.Wei-LienWU/pit-fundamentals)](https://mcptry.com/servers/io.github.Wei-LienWU/pit-fundamentals)
+
 Company financials from official filings, as MCP tools, with **the filing
 date on every figure**. About 4.2 million entities in 12 markets, most of
 them private companies: the company registers of France, Belgium, Denmark,
